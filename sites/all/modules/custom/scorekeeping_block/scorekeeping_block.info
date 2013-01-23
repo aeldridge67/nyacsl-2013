@@ -1,0 +1,5 @@
+;$Id$
+name = Scorekeeping Blocks
+description = Blocks for displaying and, for administrators, linking to NYACSL scores and standings.
+package = NYACSL
+core = 6.x

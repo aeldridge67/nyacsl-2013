@@ -1,0 +1,31 @@
+<?php
+// $Id$
+
+/*
+function price_range_dropdown_perm() {
+  return array('access price_range_dropdown content');
+}
+*/
+
+/**
+* Alter the form to display dropdowns for price range
+*/
+function season_select_form_alter(&$form, $form_state, $form_id) {
+  switch ($form_id) {
+    case 'views_exposed_form' :
+      $year_options = array(
+        '2009' => t('2009'),
+        '2010' => t('2010'),
+      );
+      $year_options_select = array (
+        '#type' => 'select',
+        '#multiple' => false,
+        '#required' => false,
+        '#options' => $$year_options,
+        '#default_value' => '2010',
+      );     
+      $form['field_season_year'] = $$year_options_select;
+      break;
+  }
+}
+?>

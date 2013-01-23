@@ -1,0 +1,139 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module to implement scorekeeping for the NYACSL.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+
+function coaches_menu() {
+
+	$items['coaches'] = array(
+		'title' => 'NYACSL COACHES',
+		'page callback' => 'coaches_home',
+		'access callback' => 'user_access',
+		'access arguments' => array('access coaches section'),
+		//'type' => MENU_CALLBACK,
+		'weight' => -5,
+	);
+
+/*
+	$items['coaches/thisweek'] = array( 
+		'title' => 'This Week\'s Scores', 
+		'page callback' => 'scorekeeping_thisweek', 
+		'access callback' => 'user_access',
+		'access arguments' => array('edit scores'),
+	);
+*/
+
+	return $items;
+
+}
+
+/**
+ * First Page callback.
+ * Called when user goes to http://localhost/?q=scorekeeping
+ */
+
+
+function coaches_home() {
+	//return t('Main Scorekeeping Page');
+	$output = t('Main Coaches Page');
+ 	//$output .= drupal_get_form('scorekeeping_firstform'); 
+	
+	return $output;
+}
+
+
+/**
+ * Second Page callback.
+ * Called when user goes to http://localhost/scorekeeping/thisweek
+ */
+
+/*
+function scorekeeping_thisweek() {
+	return t("This week's scores!");
+}
+*/
+
+/**
+ * Form firstform is defined.
+ */ 
+ 
+/*
+function scorekeeping_firstform() {
+	$form['home_team_score'] = array(
+		'#title' => t('Home Team Score'),
+		'#type' => 'textfield',
+		'#description' => t('Please enter a score for the home team.')
+	);
+	
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Submit score')
+	);
+	
+	return $form;
+
+}
+*/
+
+/**
+ * Validate the form.
+ */
+/*
+function scorekeeping_firstform_validate($form, &$form_state) {
+	$home_team_score_input = $form_state['values']['home_team_score'];
+	if ($home_team_score_input < 0) { 
+		// We notify the form API that this field has failed validation. 
+		form_set_error('home_team_score', t('Home Team Score must be greater than zero.')); 
+	} 
+} 
+*/
+
+/**
+ * Handle post-validation form submission.
+ */
+ 
+/*
+function scorekeeping_firstform_submit($form, &$form_state) { 
+	$hometeamscore = $form_state['values']['home_team_score']; 
+	drupal_set_message(t('The home team scored %hts runs.', array('%hts' => $hometeamscore)));
+} 
+*/
+
+/**
+ * Implementation of hook_perm().
+ */
+ 
+
+function coaches_perm() {
+	return array('access coaches section'); 
+}
+
+
+
+/**
+* Implementation of hook_form_alter().
+*
+*/
+// function scorekeeping_form_alter($form_id, &$form) {
+// function scorekeeping_form_user_profile_form_alter($form_id, &$form) {
+//function scorekeeping_form_alter(&$form, &$form_state, $form_id) {
+  // check to see if form element exists
+ // if (isset($form['Registration (Required)']['profile_favorite_color'])) {
+//  if (($form_id == 'user_profile_form') || ($form_id == 'user_register')) {
+//    $colors = array();
+    // get key/value pairs for dropdown
+//    $result = db_query("SELECT nid, field_company_url_title FROM {content_type_team} ORDER BY field_company_url_title ASC");
+//    while ($row = db_fetch_object($result)) {
+//      $colors[$row->field_company_url_title] = $row->field_company_url_title;
+//    }
+    // update options attribute for form element
+//    $form['Registration (Required)']['profile_favorite_color']['#options'] = $colors;
+//  }
+//}

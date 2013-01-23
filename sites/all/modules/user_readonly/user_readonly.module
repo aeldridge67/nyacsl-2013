@@ -1,0 +1,260 @@
+<?php
+
+/**
+ * @file
+ *
+ * This module provides restrictions on user account/profile fields.
+ */
+
+/**
+ * Gets the default restrictions set by user_readonly_admin_settings()
+ * and if none are set, sets up some empty array elements.
+ *
+ * @return array
+ */
+function _user_readonly_get() {
+  $a = variable_get('user_readonly', '');
+  if (empty($a)) {
+    $a = array(0 => array('mode' => 'deny', 'roles' => array(), 'action' => 'disable'));
+  }
+  return $a;
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function user_readonly_perm() {
+  return array('administer user read-only settings');
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ * @return array
+ */
+function user_readonly_menu() {
+  $items = array();
+  $items['admin/user/user_readonly'] = array(
+    'title' => 'User ReadOnly',
+    'description' => 'Set which profile fields cannot be edited.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('user_readonly_admin_settings'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer user read-only settings'),
+    'type' => MENU_NORMAL_ITEM
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function user_readonly_help($path, $arg) {
+  switch ($path) {
+    case 'admin/user/user_readonly':
+      global $user;
+      return t('Here you can define modification restrictions for user/profile editing. The options below the fieldsets correspond to the appropriate fields which are visible in <a href="@account_url">account settings form</a>.  Note that password-type and date-type fields cannot be set read-only; they must be hidden.', array('@account_url' => url("user/$user->uid/edit")));
+      break;
+  }
+}
+
+/**
+ * Configuration form for setting default restrictions.
+ *
+ * @return array
+ */
+function user_readonly_admin_settings() {
+  // important: tell Drupal to keep the tree structure of the form
+  $form = array('#tree' => TRUE);
+  $settings = _user_readonly_get();
+
+  // build the list of fields that we can configure
+  $fields = array();
+  // drupal_retrieve_form() call changes the page title... so we workaround this
+  $title = drupal_get_title();
+  $form_state = array();
+  $user_edit = drupal_retrieve_form('user_edit_form', $form_state, '',  array('name' => '', 'mail' => ''));
+  drupal_set_title($title);
+
+  foreach ($user_edit as $k => $v) {
+    if ($k[0] != '_' && !element_property($k) && is_array($v)) {
+      foreach ($v as $key => $value) {
+        if (!element_property($key) && is_array($v[$key])) {
+          $fields[$key] = check_plain($v['#title']) . (empty($v['#title']) ? '' : ' &raquo; ') . check_plain($key == 'pass' ? t('Password') : $value['#title']);
+        }
+      }
+    }
+  }
+  if (module_exists('profile')) {
+    $result = db_query('SELECT name, title FROM {profile_fields} ORDER BY category, weight, title');
+    while ($obj = db_fetch_object($result)) {
+      $fields[$obj->name] = $obj->title;
+    }
+  }
+
+  $roles = user_roles(TRUE);
+
+  $modes = array(
+    0 => t('Use the default role settings.'),
+    'deny' => t('Only <strong>DENY</strong> changes to users with these roles.'),
+    'allow' => t('Only <strong>ALLOW</strong> changes to users with these roles.'),
+  );
+
+
+  // create the part of the form all the fields use for every field options
+  $partialf = array(
+    '#type' => 'fieldset',
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $partialf['mode'] = array(
+    '#type'          => 'radios',
+    '#title'         => t('Restrictions mode'),
+    '#default_value' => $settings[0]['mode'],
+    '#options'       => $modes,
+    '#description'   => t('Define the restriction rules. To deny all changes, choose ALLOW, but do not select any fields below.'),
+  );
+  $partialf['roles'] = array(
+    '#type'          => 'checkboxes',
+    '#title'         => t('Roles'),
+    '#default_value' => $settings[0]['roles'],
+    '#options'       => $roles,
+  );
+  $partialf['action'] = array(
+    '#type'          => 'radios',
+    '#title'         => t('When restrictions apply'),
+    '#default_value' => $settings[0]['action'],
+    '#options'       => array(0 => t('Use the default settings.'), 'disable' => t('Disable the fields.'), 'hide' => t('Hide the fields.')),
+    '#description'   => t('Disabling fields greys them out but users can still see the fields. Hiding fields removes them from the form. This option is independent from the above restriction rule setting.'),
+  );
+
+  // create the default settings form
+  $defaultf = $partialf;
+  $defaultf['#collapsed'] = FALSE;
+  $defaultf['#title'] = t('Default settings for all fields');
+  unset($defaultf['mode']['#options'][0]);
+  unset($defaultf['action']['#options'][0]);
+  $form[0] = $defaultf;
+
+  // create the form for all fields
+  foreach ($fields as $fid => $fname) {
+    $partialf['#title'] = $fname;
+    if (isset($settings[$fid])) {
+      $defaults = $settings[$fid];
+    }
+    if (empty($defaults)) {
+      $defaults = array('mode' => 0, 'roles' => array(), 'action' => 0);
+    }
+    $partialf['mode']['#default_value'] = $defaults['mode'];
+    $partialf['roles']['#default_value'] = $defaults['roles'];
+    $partialf['action']['#default_value'] = $defaults['action'];
+    $form[$fid] = $partialf;
+    if (!empty($defaults['mode']) || !empty($defaults['action'])) {
+      $form[$fid]['#collapsed'] = FALSE;
+    }
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration')
+  );
+
+  // doesn't use standard system_settings_form() because the config is stored as an array of role settings
+  return $form;
+}
+
+/**
+ * Automatic handler for the submission from user_readonly_admin_settings()
+ */
+function user_readonly_admin_settings_submit($form, &$form_state) {
+  // certain form values don't need to be saved in the db
+  unset(
+    $form_state['values']['op'],
+    $form_state['values']['submit'],
+    $form_state['values']['reset'],
+    $form_state['values']['form_token'],
+    $form_state['values']['form_build_id'],
+    $form_state['values']['form_id']
+  );
+  variable_set('user_readonly', $form_state['values']);
+  drupal_set_message(t('The configuration options have been saved.'));
+  drupal_goto('admin/user/user_readonly');
+}
+
+/**
+ * Prevent the user from attempting to edit the field,
+ * thus preventing confusion.
+ * insert a hidden field w/ the appropriate value, since
+ * disabled fields do not get posted.
+ */
+function user_readonly_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id != 'user_edit' && $form_id != 'user_profile_form') {
+    return;
+  }
+  $settings = _user_readonly_get();
+  global $user;
+  $user_roles = $user->roles;
+
+  foreach ($form as $group => $data) {
+    if (!is_array($data) || preg_match("/^#/", $group) || count(element_children($data)) == 0) {
+      continue;
+    }
+    $display_group = FALSE;
+    foreach (element_children($data) as $key => $value) {
+      // only restrict access to fields controlled by this module.
+      if (empty($settings[$value]) || !is_array($data[$value])) {
+        $display_group = TRUE;
+        continue;
+      }
+      //use the default values if the setting tells so
+      $settings_used = empty($settings[$value]['mode']) ? $settings[0] : $settings[$value];
+
+      // check whether this user is allowed to make changes to this field
+
+      // first, check if any of this user's roles are ticked in the settings
+      $ticked = FALSE;
+      foreach ($user_roles as $role_rid => $role_name) {
+        if (!empty($settings_used['roles'][$role_rid])) {
+          //this means that in the settings, this user qualifies as 'ticked'.  That can mean 'allow' or 'deny', depending on the mode.
+          $ticked = TRUE;
+          break;
+        }
+      }
+
+      if (!user_access('administer user read-only settings') &&
+        (($ticked == TRUE && $settings_used['mode'] == 'deny') || ($ticked == FALSE && $settings_used['mode'] == 'allow'))) {
+        $action = empty($settings_used['action']) ? $settings[0]['action'] : $settings_used['action'];
+
+        switch ($form[$group][$value]['#type']) {
+          case 'date':
+            $form[$group]['user_readonly'][$value] = $form[$group][$key];
+            $form[$group]['user_readonly'][$value]['#type'] = 'item';
+            $form[$group]['user_readonly'][$value]['#description'] = '';
+            $form[$group]['user_readonly'][$value]['#title'] = '';
+            $form[$group][$value]['#disabled'] = TRUE;
+            break;
+          case 'password_confirm':
+            // due to the complex nature of these fields, we simply hide them from the form.
+            unset($form[$group][$value]);
+            break;
+
+          default:
+            if ($action == 'hide') {
+              $form[$group][$value]['#type'] = 'hidden';
+            }
+            else {
+              $display_group = TRUE;
+              $form[$group][$value]['#disabled'] = TRUE;
+              $form[$group][$value]['#value'] = $form[$group][$value]['#default_value'];
+            }
+        } // End switch
+      } // End check for user access
+      else {
+        $display_group = TRUE;
+      }
+    } // End foreach (element_children($data) as $key => $value)
+    if (!$display_group) {
+      $form[$group]['#access'] = FALSE;
+    }
+  }
+}

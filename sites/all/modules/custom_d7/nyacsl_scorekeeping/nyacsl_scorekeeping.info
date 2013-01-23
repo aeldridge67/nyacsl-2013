@@ -1,0 +1,7 @@
+;$Id$
+name = NYACSL Scorekeeping Module
+description = "Interface for NYACSL scorekeeper to enter/edit scores, or reschedule/postpone games."
+package = NYACSL
+core = 7.x
+
+files[] = nyacsl_scorekeeping.module

@@ -1,0 +1,5 @@
+;$Id$
+name = Rainout
+description = Module that allows NYACSL board members to issue a rainout message to the web. Also changes status of games to "postponed".
+package = NYACSL
+core = 6.x

@@ -1,0 +1,137 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module to implement scorekeeping for the NYACSL.
+ */
+
+/**       
+ * Implementation of hook_perm().
+ */
+ 
+function rpi_perm() {
+	return array('edit scores'); 
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+
+
+function rpi_menu() {
+
+	$items['scorekeeping/rpi'] = array(
+		'title' => 'NYACSL RPI',
+		'page callback' => 'rpi_home',
+		'access callback' => 'user_access',
+		'access arguments' => array('edit scores'),
+/* 		'type' => MENU_CALLBACK, */
+		'weight' => 5,
+	);
+	
+	return $items;
+}
+
+/**
+ * First Page callback.
+ * Called when user goes to /scorekeeping/rpi
+ */
+
+function rpi_home() {
+
+	$teams = db_query('SELECT c.nid, c.field_season_total_wins_value, c.field_season_total_losses_value FROM {content_type_team_stats} AS c WHERE c.field_season_year_value = %d', 2010);
+
+	while ($objteam = db_fetch_object($teams)) {
+/* 		dsm($objteam); */
+
+		$allwins_opponents = 0;
+		$alllosses_opponents = 0;
+		$allwins_opponents_opponents = 0;
+		$alllosses_opponents_opponents = 0;
+
+	
+		$allcompletedgames = db_query('SELECT g.field_game_away_team_nid, g.field_game_home_team_nid, awayteam.field_season_total_wins_value AS awayteamwins, awayteam.field_season_total_losses_value AS awayteamlosses, hometeam.field_season_total_wins_value AS hometeamwins, hometeam.field_season_total_losses_value AS hometeamlosses FROM content_type_softball_game AS g INNER JOIN content_type_team_stats AS awayteam ON g.field_game_away_team_nid = awayteam.nid INNER JOIN content_type_team_stats AS hometeam ON g.field_game_home_team_nid = hometeam.nid WHERE ((g.field_game_away_team_nid = %d) OR (g.field_game_home_team_nid = %d)) AND (g.field_game_softball_game_status_nid = %d)', $objteam->nid, $objteam->nid, 25);
+		
+		while ($objcompletedgame = db_fetch_object($allcompletedgames)) {
+/* 				dsm($objcompletedgame); */
+
+		
+			if ($objcompletedgame->field_game_away_team_nid == $objteam->nid) {
+				$allwins_opponents += $objcompletedgame->hometeamwins;
+				$alllosses_opponents += $objcompletedgame->hometeamlosses;
+				$opponent_nid = $objcompletedgame->field_game_home_team_nid;
+			}
+			else {
+				$allwins_opponents += $objcompletedgame->awayteamwins;
+				$alllosses_opponents += $objcompletedgame->awayteamlosses;
+				$opponent_nid = $objcompletedgame->field_game_away_team_nid;
+			}
+			
+			$allopponentcompletedgames = db_query('SELECT g.field_game_away_team_nid, g.field_game_home_team_nid, awayteam.field_season_total_wins_value AS awayteamwins, awayteam.field_season_total_losses_value AS awayteamlosses, hometeam.field_season_total_wins_value AS hometeamwins, hometeam.field_season_total_losses_value AS hometeamlosses FROM content_type_softball_game AS g INNER JOIN content_type_team_stats AS awayteam ON g.field_game_away_team_nid = awayteam.nid INNER JOIN content_type_team_stats AS hometeam ON g.field_game_home_team_nid = hometeam.nid WHERE ((g.field_game_away_team_nid = %d) OR (g.field_game_home_team_nid = %d)) AND (g.field_game_softball_game_status_nid = %d)', $opponent_nid, $opponent_nid, 25);
+			
+			while ($objopponentcompletedgame = db_fetch_object($allopponentcompletedgames)) {
+			
+/* 					dsm($objopponentcompletedgame); */
+
+			
+				if ($objopponentcompletedgame->field_game_away_team_nid == $opponent_nid) {
+					$allwins_opponents_opponents += $objopponentcompletedgame->hometeamwins;
+					$alllosses_opponents_opponents += $objopponentcompletedgame->hometeamlosses;
+				}
+				else {
+					$allwins_opponents_opponents += $objopponentcompletedgame->awayteamwins;
+					$alllosses_opponents_opponents += $objopponentcompletedgame->awayteamlosses;
+				}
+			
+			}
+		
+		}
+	
+		if (($objteam->field_season_total_wins_value + $objteam->field_season_total_losses_value) > 0) {
+			$winpct = $objteam->field_season_total_wins_value / ($objteam->field_season_total_wins_value + $objteam->field_season_total_losses_value);
+		} else {
+			$winpct = 0;
+		}
+		
+		if (($allwins_opponents + $alllosses_opponents) > 0) {
+			$oppwinpct = $allwins_opponents / ($allwins_opponents + $alllosses_opponents);
+		} else {
+			$oppwinpct = 0;
+		}
+			
+		if (($allwins_opponents_opponents + $alllosses_opponents_opponents) > 0) {
+			$oppoppwinoct = $allwins_opponents_opponents / ($allwins_opponents_opponents + $alllosses_opponents_opponents);
+		} else {
+			$oppoppwinoct = 0;
+		}	
+			
+			
+		$rpi = round((.25 * $winpct) + (.5 * $oppwinpct) + (.25 * $oppoppwinoct),3);
+		
+/* 		dsm($allwins_opponents, $alllosses_opponents, $allwins_opponents_opponents, $alllosses_opponents_opponents); */
+
+/* 		dsm($rpi); */
+		
+/* 		db_query("UPDATE {content_type_team_stats} SET field_season_rpi_value = %d WHERE nid = %d", $rpi, $objteam->nid); */
+	
+		$teamnode = node_load($objteam->nid);
+/* 		dsm($teamnode); */
+		$teamnode->field_season_rpi[0][value] = $rpi;
+		$teamnode->field_season_rpi2[0][value] = $rpi;
+		node_save(&$teamnode);
+
+	}
+/* $form_state['redirect'] = 'rpi'; */
+
+/* drupal_set_message(t('RPI has been re-calculated.')); */
+
+	$output = t("RPI has been re-calculated");
+	//$output .= t("The dayoftheyear = " . $dayoftheyear . "<BR>");
+	//$output .= t("The unpublishdate = " . $unpublishdate . "<BR>");
+
+	return $output;
+
+		
+
+}

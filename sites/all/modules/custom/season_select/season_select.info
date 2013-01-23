@@ -1,0 +1,5 @@
+;$Id$
+name = Season Select
+description = Module that changes the exposed field when selecting seasons from a (default) textfield to a select menu.
+package = NYACSL
+core = 6.x

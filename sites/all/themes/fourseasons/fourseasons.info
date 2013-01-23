@@ -1,0 +1,18 @@
+; $Id:$
+name = Four Seasons
+description = "Fixed width(990px), 3 columns by <a href='http://forward-media.de'>forward-media.de</a>"
+core = 6.x
+engine = phptemplate
+
+regions[left] = Left sidebar
+regions[right] = Right sidebar
+regions[above_content] = Above content
+regions[content] = Content
+regions[footer] = Footer
+
+; Information added by drupal.org packaging script on 2009-07-20
+version = "6.x-2.x-dev"
+core = "6.x"
+project = "fourseasons"
+datestamp = "1248092112"
+

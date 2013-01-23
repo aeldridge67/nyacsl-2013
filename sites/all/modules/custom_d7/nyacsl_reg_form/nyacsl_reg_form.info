@@ -1,0 +1,7 @@
+;$Id$
+name = NYACSL Registration Form
+description = "Generate a form to allow players to register as an official participant in the NYACSL."
+package = NYACSL
+core = 7.x
+
+files[] = nyacsl_reg_form.module

@@ -1,0 +1,30 @@
+<?php
+
+// $Id$
+
+/**
+ * @file
+ * Use this module to generate player registration from for the NYACSL.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+ 
+function nyacsl_reg_form_menu() {
+
+	$items = array();
+
+
+	$items['registration/form'] = array( 
+		'title' => 'NYACSL Player Registration Form', 
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('nyacsl_reg_form'),
+		'access callback' => TRUE,
+		/* 		'access arguments' => array('view schedules'), */
+/* 		'type' => MENU_CALLBACK, */
+    'file' => 'nyacsl_reg_form.inc',
+	);
+
+	return $items;
+}

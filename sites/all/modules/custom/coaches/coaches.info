@@ -1,0 +1,5 @@
+;$Id$
+name = Coaches
+description = Module that sets up a menu item for NYACSL coaches.
+package = NYACSL
+core = 6.x

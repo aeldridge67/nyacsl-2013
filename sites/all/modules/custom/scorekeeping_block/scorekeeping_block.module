@@ -1,0 +1,112 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module for blocks to display and link to NYACSL scores and standings.
+ */
+
+/**
+ * Implementation of hook_block().
+ */
+ 
+function scorekeeping_block_block($op = 'list', $delta = 0, $edit = array()) {
+	switch ($op) {
+		case 'list':
+			$blocks[0]['info'] = t('NYACSL Scores');
+			$blocks[0]['cache'] = BLOCK_NO_CACHE;
+			return $blocks;
+			
+		case 'view':
+						
+			$start_stamp = date('Y-m-d', strtotime("-" . date("w") . " days"));
+			$end_stamp = date('Y-m-d', strtotime("+" . (7 - date("w")) . " days"));
+						
+/* 			$result = db_query('SELECT c .*, away2.field_team_code_value AS awayteamcode, home2.field_team_code_value AS hometeamcode, field.field_code_value AS fieldcode FROM {content_type_softball_game} AS c INNER JOIN content_type_team_stats AS away ON c.field_game_away_team_nid = away.nid INNER JOIN content_type_team_stats AS home ON c.field_game_home_team_nid = home.nid INNER JOIN content_type_softball_field AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE (c.field_game_softball_game_date_value < "'. $end_stamp . '") AND ((c.field_game_softball_game_status_nid = 16) OR (c.field_game_softball_game_status_nid = 294)) ORDER BY c.field_game_softball_game_date_value ASC'); */
+			
+			$result = db_query('SELECT c .*, away2.field_team_code_value AS awayteamcode, home2.field_team_code_value AS hometeamcode, field.field_code_value AS fieldcode FROM {content_type_softball_game} AS c INNER JOIN content_type_team_stats AS away ON c.field_game_away_team_nid = away.nid INNER JOIN content_type_team_stats AS home ON c.field_game_home_team_nid = home.nid INNER JOIN content_type_softball_field AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE (c.field_game_softball_game_date_value < "'. $end_stamp . '") AND (c.field_game_softball_game_date_value > "'. $start_stamp . '") ORDER BY c.field_game_softball_game_date_value ASC');
+
+/* 			dsm(db_fetch_object($result)); */
+
+			$items = array();
+			
+			$date_cell_class = 'date-cell-1';
+			$teams_cell_class = 'teams-cell-1';
+			$results_cell_class = 'results-cell-1';
+			$row_date = '';
+
+			
+			while ($singlegame = db_fetch_object($result)) {
+				if (($row_date != $singlegame->field_game_softball_game_date_value) AND ($row_date != '')) {
+					if ($date_cell_class == 'date-cell-1') {
+						$date_cell_class = 'date-cell-2';
+						$teams_cell_class = 'teams-cell-2';
+						$results_cell_class = 'results-cell-2';
+					} else {
+						$date_cell_class = 'date-cell-1';
+						$teams_cell_class = 'teams-cell-1';
+						$results_cell_class = 'results-cell-1';
+					}
+				}
+				$row_date = $singlegame->field_game_softball_game_date_value;
+				
+				$row = array();
+
+				switch((int)$singlegame->field_game_softball_game_status_nid) {
+					case 25:
+					case 53:
+					
+						if ($singlegame->field_game_away_team_score_value > $singlegame->field_game_home_team_score_value) {
+							$row[] = array('data' => date("m-d", strtotime($singlegame->field_game_softball_game_date_value)), 'class' => t($date_cell_class));
+							$row[] = array('data' => l(t($singlegame->awayteamcode), 'teamschedule/' . $singlegame->awayteamcode) . ' ' . t($singlegame->field_game_away_team_score_value) . '  ' . l(t($singlegame->hometeamcode), 'teamschedule/' . $singlegame->hometeamcode) . ' ' . t($singlegame->field_game_home_team_score_value), 'class' => t($results_cell_class), 'colspan' => '2');
+							
+						}
+						else {
+							$row[] = array('data' => date("m-d", strtotime($singlegame->field_game_softball_game_date_value)), 'class' => t($date_cell_class));
+							$row[] = array('data' => l(t($singlegame->hometeamcode), 'teamschedule/' . $singlegame->hometeamcode) . ' ' . t($singlegame->field_game_home_team_score_value) . '  ' . l(t($singlegame->awayteamcode), 'teamschedule/' . $singlegame->awayteamcode) . ' ' . t($singlegame->field_game_away_team_score_value), 'class' => t($results_cell_class), 'colspan' => '2');
+
+						}
+						break;
+					case 54:
+							$row[] = array('data' => date("m-d", strtotime($singlegame->field_game_softball_game_date_value)), 'class' => t($date_cell_class));
+							$row[] = array('data' => l(t($singlegame->hometeamcode), 'teamschedule/' . $singlegame->hometeamcode) . ' ' . t($singlegame->field_game_home_team_score_value) . '  ' . l(t($singlegame->awayteamcode), 'teamschedule/' . $singlegame->awayteamcode) . ' ' . t($singlegame->field_game_away_team_score_value) . ' (INC)', 'class' => t($results_cell_class), 'colspan' => '2');
+						break;
+					case 16:
+					case 294:
+/* 						$thearg = date("m-d", strtotime($singlegame->field_game_softball_game_date_value)); */
+
+						$row[] = array('data' => date("m-d", strtotime($singlegame->field_game_softball_game_date_value)), 'class' => t($date_cell_class));
+						$row[] = array('data' => l(t($singlegame->awayteamcode), 'teamschedule/' . $singlegame->awayteamcode) . ' at ' . l(t($singlegame->hometeamcode), 'teamschedule/' . $singlegame->hometeamcode), 'class' => t($teams_cell_class));
+						$row[] = array('data' => t($singlegame->fieldcode), 'class' => t($date_cell_class));
+
+						break;
+					case 52:
+						$row[] = array('data' => date("m-d", strtotime($singlegame->field_game_softball_game_date_value)), 'class' => t($date_cell_class));
+						$row[] = array('data' => l(t($singlegame->awayteamcode), 'teamschedule/' . $singlegame->awayteamcode) . ' at ' . l(t($singlegame->hometeamcode), 'teamschedule/' . $singlegame->hometeamcode), 'class' => t($teams_cell_class));
+						$row[] = array('data' => t("PPD"), 'class' => t($date_cell_class));
+						break;
+				}
+				
+				$items[] = $row;			
+			}
+			
+/* 			$header = array( 'Header 1', 'Header 2', 'Header 3'); */
+/* 			$header = array( 'Header 1'); */
+			
+			$attributes = array(
+				'border'      => 0,
+				'cellspacing' => 0,
+				'cellpadding' => 0,
+/* 				'class'       => 'ooo-table' */
+				);
+
+			$output = theme('table', $header, $items, $attributes);
+
+			$block['subject']=t('This Week in Softball');
+			
+			//We theme our array of links as an unordered list. 
+			$block['content']=$output; 
+	}
+	
+	return $block; 
+}

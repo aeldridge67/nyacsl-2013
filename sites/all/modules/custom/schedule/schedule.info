@@ -1,0 +1,5 @@
+;$Id$
+name = Schedule
+description = Module that displays a NYACSL team's softball schedule.
+package = NYACSL
+core = 6.x

@@ -1,0 +1,186 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module to implement team schedules for the NYACSL.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+ 
+ function schedule_menu($a= '') {
+ 
+ 	$teamnnameresult = db_result(db_query('SELECT c.field_company_url_title FROM {content_type_team} c WHERE c.field_team_code_value = "%s"', $a));
+
+	$items['teamschedule/%'] = array( 
+		'title' => 'Team Schedule for @name', 
+		'title callback' => 'schedule_title',
+		'title arguments' => array(1),
+		'page callback' => 'schedule_display',
+		'page arguments' => array(1), 
+		'access callback' => 'user_access',
+		'access arguments' => array('view schedules'),
+		'type' => MENU_CALLBACK,
+
+	);
+
+	return $items; 
+ 
+ }
+
+
+
+
+
+/**
+ * Title callback.
+ */
+ 
+ function schedule_title($a) {
+ 
+ 	 	$teamnnameresult = db_result(db_query('SELECT c.field_company_url_title FROM {content_type_team} c WHERE c.field_team_code_value = "%s"', $a)); 	 
+     	return "Team Schedule for " . $teamnnameresult;
+ }
+
+
+
+/**
+ * Page callback.
+ * Called when user goes to http://localhost/?q=teamschedule
+ */
+ 
+ function schedule_display($a = '') {
+ 
+ 	$gamerownumber = 0;
+ 
+/*  	$teamnidresult = db_result(db_query('SELECT c.nid FROM {content_type_team} c WHERE c.field_team_code_value = "%s"', $a)); */
+ 	
+ 	
+ 	 $teamnidresult = db_result(db_query('SELECT c.nid FROM {content_type_team_stats} AS c INNER JOIN {content_type_team} as t ON c.field_team_reference_for_stats_nid = t.nid WHERE c.field_season_year_value = "2011" AND  t.field_team_code_value = "%s"', $a));
+
+/*
+ 	$gamesresult = db_query('SELECT c.*, away.field_playoff_seed_value AS awayseed, away.field_team_code_value AS awayteamcode, away.field_company_url_title AS awayteamname, away.field_total_wins_value AS awayteamwins, away.field_total_losses_value AS awayteamlosses, home.field_total_wins_value AS hometeamwins, home.field_total_losses_value AS hometeamlosses, home.field_team_code_value AS hometeamcode, home.field_company_url_title AS hometeamname, home.field_playoff_seed_value AS homeseed, field.field_code_value AS fieldcode, field.field_code_value AS fieldcode
+FROM content_type_game AS c
+INNER JOIN content_type_team AS away ON c.field_away_team_name_nid = away.nid
+INNER JOIN content_type_team AS home ON c.field_home_team_name_nid = home.nid
+INNER JOIN content_type_softball_field AS field ON c.field_noderef_test_nid = field.nid
+WHERE c.field_away_team_name_nid = %d OR c.field_home_team_name_nid = %d ORDER BY c.field_game_date_value ASC', $teamnidresult, $teamnidresult);
+*/
+ 
+
+/*  $gamesresult = db_query('SELECT c.*, away2.field_team_code_value AS awayteamcode, away2.field_company_url_title AS awayteamname, away.field_season_total_wins_value AS awayteamwins, away.field_season_total_losses_value AS awayteamlosses, home2.field_team_code_value AS hometeamcode, home2.field_company_url_title AS hometeamname, home.field_season_total_wins_value AS hometeamwins, home.field_season_total_losses_value AS hometeamlosses, field.field_code_value AS fieldcode FROM content_type_softball_game AS c INNER JOIN content_type_team_stats AS away ON c.field_game_away_team_nid = away.nid INNER JOIN content_type_team_stats AS home ON c.field_game_home_team_nid = home.nid INNER JOIN content_type_softball_field AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE c.field_game_away_team_nid = %d OR c.field_game_home_team_nid = %d ORDER BY c.field_game_softball_game_date_value ASC', $teamnidresult, $teamnidresult); */
+
+
+ $gamesresult = db_query('SELECT c.*, away2.field_team_code_value AS awayteamcode, away2.field_company_url_title AS awayteamname, away.field_season_postseason_seed_value AS awayseed, home.field_season_postseason_seed_value AS homeseed, away.field_season_total_wins_value AS awayteamwins, away.field_season_total_losses_value AS awayteamlosses, home2.field_team_code_value AS hometeamcode, home2.field_company_url_title AS hometeamname, home.field_season_total_wins_value AS hometeamwins, home.field_season_total_losses_value AS hometeamlosses, field.field_code_value AS fieldcode FROM content_type_softball_game AS c INNER JOIN content_type_team_stats AS away ON c.field_game_away_team_nid = away.nid INNER JOIN content_type_team_stats AS home ON c.field_game_home_team_nid = home.nid INNER JOIN content_type_softball_field AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE c.field_game_away_team_nid = %d OR c.field_game_home_team_nid = %d ORDER BY c.field_game_softball_game_date_value ASC', $teamnidresult, $teamnidresult);
+
+
+
+
+
+
+
+ 	//$output .= t('This is the team schedule for NODE ID: ' . $teamnidresult);
+	$output .= "<table>";
+	//$output .= "<tr><td colspan=3><B>SCHEDULE FOR " . t($a) . "</B></td></tr>";
+	//$output .= "<tr><td><B>DATE</B></td><td><B>GAME</B></td><td><B>LOCATION -or- RESULT</B></td></tr>";
+	
+	while($gamesdata=db_fetch_object($gamesresult)) {
+	
+		$gamerownumber += 1;
+		
+		if ($gamerownumber == 16) {
+			$output .= "<tr><td>&nbsp;</td><td>&nbsp;</td></tr>";
+			$output .= "<tr><td><B>PLAYOFFS</B></td><td></td></tr>";
+		}
+	
+		if ($gamerownumber%2 == 1) {
+				$output .= "<tr class='odd'><td class='gamedatecell'>";
+		} else {
+				$output .= "<tr class='even'><td class='gamedatecell'>";
+		}
+		$output .= "&nbsp;" . date("m-d-y", strtotime($gamesdata->field_game_softball_game_date_value));
+		
+		if ($gamerownumber > 15) {
+			$corrected_time = strtotime($gamesdata->field_game_softball_game_date_value) - (3600 * 4);
+			$output .= "&nbsp;at&nbsp;" . date("g:ia", $corrected_time);
+		}
+		
+		$output .= "</td>";
+		
+		
+		if ($gamerownumber > 15) {
+
+
+			if ($gamesdata->awayteamcode == $a) {
+				$output .= '<td class="gameopponentcell"> at&nbsp;&nbsp;<strong>#' . t($gamesdata->homeseed) . '</strong>&nbsp;' . l(t($gamesdata->hometeamname), 'teamschedule/' . $gamesdata->hometeamcode) . '&nbsp;&nbsp;(' . $gamesdata->hometeamwins . ' - ' . $gamesdata->hometeamlosses . ')';	
+	
+			}
+			else {
+				$output .= '<td class="gameopponentcell"> vs&nbsp;&nbsp;<strong>#' . t($gamesdata->awayseed) . '</strong>&nbsp;' . l(t($gamesdata->awayteamname), 'teamschedule/' . $gamesdata->awayteamcode) . '&nbsp;&nbsp;(' . $gamesdata->awayteamwins . ' - ' . $gamesdata->awayteamlosses . ')';	
+			}
+		
+		
+		}
+		else {
+
+			if ($gamesdata->awayteamcode == $a) {
+				$output .= '<td class="gameopponentcell"> at&nbsp;&nbsp;' . l(t($gamesdata->hometeamname), 'teamschedule/' . $gamesdata->hometeamcode) . '&nbsp;&nbsp;(' . $gamesdata->hometeamwins . ' - ' . $gamesdata->hometeamlosses . ')';	
+	
+			}
+			else {
+				$output .= '<td class="gameopponentcell"> vs&nbsp;&nbsp;' . l(t($gamesdata->awayteamname), 'teamschedule/' . $gamesdata->awayteamcode) . '&nbsp;&nbsp;(' . $gamesdata->awayteamwins . ' - ' . $gamesdata->awayteamlosses . ')';	
+			}
+		
+		
+		}
+
+		
+
+		$output .= "</td><td class='gamefieldorscorecell'>";
+		
+		if ($gamesdata->field_game_softball_game_status_nid == 25) {
+		
+			if ((($gamesdata->awayteamcode == $a) && ($gamesdata->field_game_away_team_score_value > $gamesdata->field_game_home_team_score_value)) || (($gamesdata->hometeamcode == $a) && ($gamesdata->field_game_home_team_score_value > $gamesdata->field_game_away_team_score_value))) {
+				$output .= "<B>W</B>&nbsp;&nbsp;&nbsp;";
+			}
+			else {
+				$output .= "L&nbsp;&nbsp;&nbsp;";
+			}
+			
+			if ($gamesdata->awayteamcode == $a) {
+				$output .= $gamesdata->field_game_away_team_score_value . " - " . $gamesdata->field_game_home_team_score_value;
+			}
+			else {
+				$output .= $gamesdata->field_game_home_team_score_value . " - " . $gamesdata->field_game_away_team_score_value;
+			}		
+		}
+		else {
+			$fullfieldname = db_result(db_query('SELECT title FROM {node} WHERE nid = %d', $gamesdata->field_game_softball_field_nid));
+			$output .= $fullfieldname;
+		}
+		$output .= "</td></tr>";				
+
+	
+	}
+
+
+	$output .= "</table>";
+	
+	return $output;
+
+ }
+ 
+ 
+ 
+ 
+ 
+ /**       
+ * Implementation of hook_perm().
+ */
+ 
+function schedule_perm() {
+	return array('view schedules');
+}
+

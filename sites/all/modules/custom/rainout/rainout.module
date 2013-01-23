@@ -1,0 +1,163 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module to implement scorekeeping for the NYACSL.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+
+function rainout_menu() {
+
+	$items['rainout'] = array(
+		'title' => 'Create Rainout Message',
+		'page callback' => 'rainout_button',
+		'access callback' => 'user_access',
+		'access arguments' => array('implement rainouts'),
+		//'type' => MENU_CALLBACK,
+		//'weight' => 5,
+	);
+	
+	$items['rainout/nodecreation'] = array(
+		'title' => 'Acknowledgement: Creation of Rainout_Page node has been successful.',
+		'page callback' => 'rainout_home',
+		'access callback' => 'user_access',
+		'access arguments' => array('implement rainouts'),
+		'type' => MENU_CALLBACK,
+		'weight' => 5,
+	);
+
+	return $items;
+}
+
+
+
+/**
+ * First Page callback.
+ * Called when user goes to http://localhost/?q=rainout
+ */
+ 
+function rainout_button() {
+
+	$result = db_result(db_query('SELECT COUNT(nid) FROM {node} WHERE type = "%s" AND status = %d', 'rainout_page', 1));
+	 
+	if ($result == 0) {
+		$output = drupal_get_form('rainout_button_form');
+	} else {
+		$output = t('A rainout page has already been set for today by'); 
+		$result2 = db_query('SELECT p.value FROM {node} AS n INNER JOIN {profile_values} AS p ON n.uid = p.uid WHERE n.type = "%s" AND n.status = %d AND (p.fid = %d OR p.fid = %d)', 'rainout_page', 1, 6, 7);
+		while ($result3 = db_fetch_object($result2)) {
+			$output .= t(' ');
+			$output .= t($result3->value);
+			}
+		$output .= t('.');
+	}
+	
+	return $output;
+}
+
+
+
+/**
+ * Form button_form is defined.
+ */ 
+
+function rainout_button_form($form_id) {
+
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Click here to post a new rainout message to the website.')
+	);
+	
+	return $form;
+}
+
+
+/**
+ * Handle post-validation button_form submission.
+ */
+
+function rainout_button_form_submit($form, &$form_state) {
+	$form_state['redirect'] = 'rainout/nodecreation';
+}
+
+
+
+
+/**
+ * Second Page callback.
+ * Called when user goes to http://localhost/?q=rainout/nodecreation
+ */
+
+function rainout_home() {
+	
+	global $user;
+	$today = date("l, F jS");
+	$todayofweek = date("w");
+	$friday = date('l, F jS', strtotime("+" . (5 - date("w")) . " days"));
+	$nextfriday = date('l, F jS', strtotime("+" . (5 - date("w") + 7) . " days"));
+
+	//$result = db_query('SELECT COUNT(nid) FROM {node} WHERE type = "rainout_page" AND status = 1'); 
+
+	$teasertext = '<a href="http://nyacsl.org/sites/default/files/rain.gif" class="thickbox"><img src="http://nyacsl.org/sites/default/files/rain.gif" alt="Rainout!" style="float: left; margin: 5px 10px 0 0;"></a>';
+	
+		$bodytext .= '<font size="4"><B>All games for today - ' . $today  . ' - have been cancelled due to either inclement weather and/or poor field conditions.</B>';
+
+	
+/*
+	$bodytext .= '<font size="4"><B>All games for today - ' . $today  . ' - have been cancelled due to either inclement weather and/or poor field conditions.</B><BR><BR>In accordance with our league policy, all games have been rescheduled for ';
+	
+	if ($todayofweek == 5) {
+		$bodytext .= $nextfriday . '.</font>';
+		}
+	else {
+		$bodytext .= $friday . '.</font>';
+		}
+*/
+		
+	$teasertext .= $bodytext;
+
+	$newNode = (object) NULL;
+	$newNode->type = 'rainout_page';
+	$newNode->title = 'All games scheduled for ' . $today . ', have been cancelled.';
+	$newNode->body = $teasertext;
+	$newNode->teaser = $teasertext;
+	$newNode->uid = $user->uid;
+	$newNode->created = strtotime("now");
+	$newNode->changed = strtotime("now");
+	$newNode->status = 1;
+	$newNode->comment = 0;
+	$newNode->promote = 1;
+	$newNode->moderate = 0;
+	$newNode->sticky = 1;
+	$newNode->format = 2;
+
+	node_save($newNode);
+	$lastnodeid = db_last_insert_id('node', 'nid');
+	$dayoftheyear = date("z") + 1;
+/* 	$unpublishdate = ($dayoftheyear * 24 * 60 * 60) + 1230782400; */
+	$unpublishdate = ($dayoftheyear * 24 * 60 * 60) + mktime(0,0,0,1,1,10);
+	//db_query("INSERT INTO {scheduler} (nid, publish_on, unpublish_on, timezone) VALUES (%d, %d, %d, %d)", $lastnodeid, 0, $unpublishdate, 0); 
+	db_query("INSERT INTO {scheduler} (nid, publish_on, unpublish_on) VALUES (%d, %d, %d)", $lastnodeid, 0, $unpublishdate, 0); 
+
+	watchdog('rainout', 'Rainout node created by %name.', array('%name' =>check_plain($user->name)));
+
+	$output = t("Games scheduled for today - ");
+	$output .= t($today);
+	$output .= t(" - have been cancelled.");
+	//$output = t("The lastnodeid = " . $lastnodeid . "<BR>");
+	//$output .= t("The dayoftheyear = " . $dayoftheyear . "<BR>");
+	//$output .= t("The unpublishdate = " . $unpublishdate . "<BR>");
+
+	return $output;
+
+}
+
+
+function rainout_perm() {
+	return array('implement rainouts'); 
+}
+

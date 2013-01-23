@@ -1,0 +1,5 @@
+;$Id$
+name = Scorekeeping
+description = Module that allows NYACSL scores to be recorded as well as subsequent changes to the NYACSL standings.
+package = NYACSL
+core = 6.x

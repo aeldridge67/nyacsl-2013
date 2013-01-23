@@ -1,0 +1,343 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Use this module to implement scorekeeping for the NYACSL.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+
+function scorekeeping_menu() {
+
+	$items['scorekeeping'] = array(
+		'title' => 'NYACSL SCOREKEEPING',
+		'page callback' => 'scorekeeping_home',
+		'access callback' => 'user_access',
+		'access arguments' => array('edit scores'),
+		//'type' => MENU_CALLBACK,
+		'weight' => 5,
+	);
+
+/*
+	$items['scorekeeping/thisweek'] = array( 
+		'title' => 'This Week\'s Scores', 
+		'page callback' => 'scorekeeping_thisweek', 
+		'access callback' => 'user_access',
+		'access arguments' => array('edit scores'),
+	);
+*/
+
+	$items['scorekeeping/updatescores'] = array( 
+		'title' => 'Update Scores', 
+		'page callback' => 'scorekeeping_updatescores', 
+		'access callback' => 'user_access',
+		'access arguments' => array('edit scores'),
+		'type' => MENU_CALLBACK,
+
+	);
+
+	return $items;
+
+}
+
+
+
+
+
+/**
+ * First Page callback.
+ * Called when user goes to http://localhost/?q=scorekeeping
+ */
+
+function scorekeeping_home() {
+	
+	$start_stamp = date('Y-m-d', strtotime("-" . date("w") . " days"));
+	$end_stamp = date('Y-m-d', strtotime("+" . (7 - date("w")) . " days"));
+	
+	$result = db_query('SELECT c .*, away2.field_team_code_value AS awayteamcode, home2.field_team_code_value AS hometeamcode, field.field_code_value AS fieldcode FROM {content_type_softball_game} AS c INNER JOIN content_type_team_stats AS away ON c.field_game_away_team_nid = away.nid INNER JOIN content_type_team_stats AS home ON c.field_game_home_team_nid = home.nid INNER JOIN content_type_softball_field AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE (c.field_game_softball_game_date_value < "'. $end_stamp . '") AND ((c.field_game_softball_game_status_nid = 16) OR (c.field_game_softball_game_status_nid = 294)) ORDER BY c.field_game_softball_game_date_value ASC');
+	
+	$output .= t('This is the main page for the administration of scores.');
+	$output .= "<table>";
+	$output .= "<tr><td><B>GAMES</B></td></tr>";
+	
+	while ($anode = db_fetch_object($result)) {
+				$output .= "<tr><td>";
+				$output .= date("m-d", strtotime($anode->field_game_softball_game_date_value)) . ': ';
+				$abc = 	$anode->awayteamcode . ' at ' . $anode->hometeamcode;
+				$output .= l(t($abc), 'scorekeeping/updatescores/' . $anode->nid);
+				$output .= "</td></tr>";				
+	}
+
+	$output .= "</table>";
+	
+	return $output;
+}
+
+
+
+
+
+/**
+ * Second Page callback.
+ * Called when user goes to http://localhost/scorekeeping/thisweek
+ */
+
+function scorekeeping_thisweek() {
+	return t("This week's scores!");
+}
+
+
+
+
+
+
+/**
+ * Third Page callback.
+ * Called when user goes to http://localhost/scorekeeping/updatescores
+ */
+
+function scorekeeping_updatescores($a = '') {
+
+/* 	$result = db_query('SELECT c.*, away.field_team_code_value AS awayteamcode, home.field_team_code_value AS hometeamcode, field.field_code_value AS fieldcode FROM {content_type_game} AS c INNER JOIN {content_type_team} AS away ON c.field_away_team_name_nid = away.nid INNER JOIN {content_type_team} AS home ON c.field_home_team_name_nid = home.nid INNER JOIN {content_type_softball_field} AS field ON c.field_noderef_test_nid = field.nid WHERE c.nid = %d', $a); */
+
+	$result = db_query('SELECT c.*, away2.field_team_code_value AS awayteamcode, home2.field_team_code_value AS hometeamcode, field.field_code_value AS fieldcode FROM {content_type_softball_game} AS c INNER JOIN {content_type_team_stats} AS away ON c.field_game_away_team_nid = away.nid INNER JOIN {content_type_team_stats} AS home ON c.field_game_home_team_nid = home.nid INNER JOIN {content_type_softball_field} AS field ON c.field_game_softball_field_nid = field.nid RIGHT JOIN content_type_team AS away2 ON away.field_team_reference_for_stats_nid = away2.nid RIGHT JOIN content_type_team AS home2 ON home.field_team_reference_for_stats_nid = home2.nid WHERE c.nid = %d', $a);	
+	
+	while($data=db_fetch_object($result)){
+		$thegamedate = t(date("m-d", strtotime($data->field_game_softball_game_date_value)));
+		$output .= drupal_get_form('scorekeeping_updatescore_form', $data->awayteamcode, $data->hometeamcode, $data->fieldcode, $thegamedate, $a);
+	}
+		
+	return $output;
+}
+
+
+
+
+
+/**
+ * Form updatescore_form is defined.
+ */ 
+ 
+function scorekeeping_updatescore_form($form_id, $awayteam = '', $hometeam = '', $fieldcode = '', $gamedate = '', $gamenid = '') {
+
+	$form['game'] = array(
+		'#title' => t($awayteam . ' at ' . $hometeam . ' on ' . $gamedate . ' at ' . $fieldcode), 
+		//'#title' => t($awayteam . ' at ' . $hometeam . ' on ' .  10-14 . ' at ' . $fieldcode), 
+		'#type' => 'fieldset', 
+	);
+
+	$form['game']['away_score'] = array(
+		'#title' => t('Away Team Score'),
+		'#type' => 'textfield',
+		//'#description' => t('Please enter a score for the home team.'),
+		'#size' => 3,
+		'#field_suffix' => t($awayteam),
+		'#element_validate' => array('scorekeeping_updatescore_form_awayteamscore_validate')
+	);
+		
+	$form['game']['home_score'] = array(
+		'#title' => t('Home Team Score'),
+		'#type' => 'textfield',
+		//'#description' => t('Please enter a score for the home team.'),
+		'#size' => 3,
+		'#field_suffix' => t($hometeam),
+		'#element_validate' => array('scorekeeping_updatescore_form_hometeamscore_validate')
+
+	);
+
+	$form['away_code'] = array( 
+		'#type' => 'value', 
+		'#value' => t($awayteam) 
+	); 
+
+	$form['home_code'] = array( 
+		'#type' => 'value', 
+		'#value' => t($hometeam) 
+	);
+
+	$form['game_nid'] = array( 
+		'#type' => 'value', 
+		'#value' => $gamenid
+	);
+	
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Submit score')
+	);
+	
+	return $form;
+
+}
+
+
+
+
+
+/**
+ * Validate the form.
+ */
+
+function scorekeeping_updatescore_form_awayteamscore_validate($form, &$form_state) {
+	//$form_state['scorekeeping']['away_code'] = t($awayteam);
+	$away_team_score_input = $form_state['values']['away_score'];
+	if (is_numeric($away_team_score_input)) {
+		if ($away_team_score_input < 0) { 
+			form_set_error('away_score', t('INVALID ENTRY in AWAY TEAM SCORE: You must enter a number greater than or equal to zero.'));
+		}
+	}
+	else {
+		form_set_error('away_score', t('INVALID ENTRY in AWAY TEAM SCORE: You must enter a number.'));
+	} 
+}
+
+function scorekeeping_updatescore_form_hometeamscore_validate($form, &$form_state) {
+	//$form_state['scorekeeping']['home_code'] = t($hometeam);
+
+	$home_team_score_input = $form_state['values']['home_score'];
+	if (is_numeric($home_team_score_input)) {
+		if ($home_team_score_input < 0) { 
+			form_set_error('home_score', t('INVALID ENTRY in HOME TEAM SCORE: You must enter a number greater than or equal to zero.'));
+		}
+	}
+	else {
+		form_set_error('home_score', t('INVALID ENTRY in HOME TEAM SCORE: You must enter a number.'));
+	} 
+}
+
+
+
+
+
+/**
+ * Handle post-validation form submission.
+ */
+ 
+function scorekeeping_updatescore_form_submit($form, &$form_state) {
+
+	// Create PHP variables from form variables
+	$awayteamcode = $form_state['values']['away_code'];
+	$hometeamcode = $form_state['values']['home_code'];
+	$awayteamscore = (int)$form_state['values']['away_score'];
+	$hometeamscore = (int)$form_state['values']['home_score'];
+	$gamenodeid = (int)$form_state['values']['game_nid'];
+	
+	// Get game status of the game
+	$gamestatusid = db_result(db_query('SELECT g.field_game_softball_game_status_nid FROM {content_type_softball_game} g WHERE g.nid = %d', $gamenodeid));
+	
+	// If it is a regular season game...
+	if ($gamestatusid == 16) {
+		
+		// Get the away team's stats for the current season
+		$awayteamresult = db_query('SELECT c.* FROM {content_type_team_stats} c INNER JOIN {content_type_team} AS t ON c.field_team_reference_for_stats_nid = t.nid WHERE t.field_team_code_value = "%s" AND c.field_season_year_value = %d', $awayteamcode, 2011);
+
+		// Using this game's account, recalculate the away team's stats
+		while($awayteamdata=db_fetch_object($awayteamresult)){
+			$awayteamnodeid = (int)$awayteamdata->nid;
+			$awayteamrunsfor = (int)$awayteamdata->field_season_total_runs_scored_value + $awayteamscore;
+			$awayteamrunsagainst = (int)$awayteamdata->field_season_total_runs_allowed_value + $hometeamscore;
+			
+			if ($awayteamscore > $hometeamscore) {
+				$awayteamwins = (int)$awayteamdata->field_season_total_wins_value + 1;
+				$awayteamlosses = (int)$awayteamdata->field_season_total_losses_value;
+				$awayteampoints = (int)$awayteamdata->field_season_total_points_value + scorekeeping_pointsforwin($awayteamcode,$hometeamcode);
+			}
+			else {
+				$awayteamwins = (int)$awayteamdata->field_season_total_wins_value;
+				$awayteamlosses = (int)$awayteamdata->field_season_total_losses_value + 1;
+				$awayteampoints = (int)$awayteamdata->field_season_total_points_value;
+			}
+		}
+			
+		// Update the database 	
+/* 		db_query("UPDATE {content_type_team_stats} SET field_season_total_runs_scored_value = %d, field_season_total_runs_allowed_value = %d, field_season_total_wins_value = %d, field_season_total_losses_value = %d, field_season_total_points_value = %d WHERE nid = %d", $awayteamrunsfor, $awayteamrunsagainst, $awayteamwins, $awayteamlosses, $awayteampoints, $awayteamnodeid); */
+		
+		// Load, update, and save node
+		$awayteamnode = node_load($awayteamnodeid);
+		$awayteamnode->field_season_total_runs_scored[0][value] = $awayteamrunsfor;
+		$awayteamnode->field_season_total_runs_allowed[0][value] = $awayteamrunsagainst;
+		$awayteamnode->field_season_total_wins[0][value] = $awayteamwins;
+		$awayteamnode->field_season_total_losses[0][value] = $awayteamlosses;
+		$awayteamnode->field_season_total_points[0][value] = $awayteampoints;
+		$awayteamnode = node_submit($awayteamnode);
+		node_save($awayteamnode);
+		
+
+		// Get the home team's stats for the current season
+		$hometeamresult = db_query('SELECT c.* FROM {content_type_team_stats} c INNER JOIN {content_type_team} AS t ON c.field_team_reference_for_stats_nid = t.nid WHERE t.field_team_code_value = "%s" AND c.field_season_year_value = %d', $hometeamcode, 2011);
+		
+		// Using this game's account, recalculate the home team's stats
+		while($hometeamdata=db_fetch_object($hometeamresult)){
+			$hometeamnodeid = (int)$hometeamdata->nid;
+			$hometeamrunsfor = (int)$hometeamdata->field_season_total_runs_scored_value + $hometeamscore;
+			$hometeamrunsagainst = (int)$hometeamdata->field_season_total_runs_allowed_value + $awayteamscore;
+			
+			if ($hometeamscore > $awayteamscore) {
+				$hometeamnodeid = (int)$hometeamdata->nid;
+				$hometeamwins = (int)$hometeamdata->field_season_total_wins_value + 1;
+				$hometeamlosses = (int)$hometeamdata->field_season_total_losses_value;
+				$hometeampoints = (int)$hometeamdata->field_season_total_points_value + scorekeeping_pointsforwin($hometeamcode,$awayteamcode);
+			}
+			else {
+				$hometeamwins = (int)$hometeamdata->field_season_total_wins_value;
+				$hometeamlosses = (int)$hometeamdata->field_season_total_losses_value + 1;
+				$hometeampoints = (int)$hometeamdata->field_season_total_points_value;
+			}
+		}
+
+		// Update the database		
+/* 		db_query("UPDATE {content_type_team_stats} SET field_season_total_runs_scored_value = %d, field_season_total_runs_allowed_value = %d, field_season_total_wins_value = %d, field_season_total_losses_value = %d, field_season_total_points_value = %d WHERE nid = %d", $hometeamrunsfor, $hometeamrunsagainst, $hometeamwins, $hometeamlosses, $hometeampoints, $hometeamnodeid); */
+		
+		// Load, update, and save node
+		$hometeamnode = node_load($hometeamnodeid);
+		$hometeamnode->field_season_total_runs_scored[0][value] = $hometeamrunsfor;
+		$hometeamnode->field_season_total_runs_allowed[0][value] = $hometeamrunsagainst;
+		$hometeamnode->field_season_total_wins[0][value] = $hometeamwins;
+		$hometeamnode->field_season_total_losses[0][value] = $hometeamlosses;
+		$hometeamnode->field_season_total_points[0][value] = $hometeampoints;
+		$hometeamnode = node_submit($hometeamnode);
+		node_save($hometeamnode);
+	}
+	
+	db_query("UPDATE {content_type_softball_game} SET field_game_away_team_score_value = %d, field_game_home_team_score_value = %d, field_game_softball_game_status_nid = %d WHERE nid = %d", $awayteamscore, $hometeamscore, 25, $gamenodeid);
+	
+	$gamenode = node_load($gamenodeid);
+	node_save(&$gamenode);
+
+		
+	$form_state['redirect'] = 'scorekeeping/' . $awayteamnodeid . '/' . $hometeamnodeid;
+	drupal_set_message(t('The score for this game has been recorded.'));
+	
+}
+
+
+
+
+/**
+ * Function to determine number of points earned for a win().
+ */
+ 
+function scorekeeping_pointsforwin($teamcode='DFC', $opponentcode='WAK') {
+
+	$teamdivno = db_result(db_query('SELECT c.field_season_division_value FROM {content_type_team_stats} c INNER JOIN {content_type_team} AS t ON c.field_team_reference_for_stats_nid = t.nid WHERE t.field_team_code_value = "%s" AND c.field_season_year_value = %d', $teamcode, 2011));
+
+	$opponentdivno = db_result(db_query('SELECT c.field_season_division_value FROM {content_type_team_stats} c INNER JOIN {content_type_team} AS t ON c.field_team_reference_for_stats_nid = t.nid WHERE t.field_team_code_value = "%s" AND c.field_season_year_value = %d', $opponentcode, 2011));
+		
+	if ($teamdivno == $opponentdivno) {
+		return 10;
+	} elseif ((($teamdivno == 1) && ($opponentdivno == 2)) || (($teamdivno == 2) && ($opponentdivno == 1)) || (($teamdivno == 3) && ($opponentdivno == 4)) || (($teamdivno == 4) && ($opponentdivno == 3))) {
+		return 9;
+	} else return 8;
+}
+
+
+
+/**       
+ * Implementation of hook_perm().
+ */
+ 
+function scorekeeping_perm() {
+	return array('edit scores'); 
+}

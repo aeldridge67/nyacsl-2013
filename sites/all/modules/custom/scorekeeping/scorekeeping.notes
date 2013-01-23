@@ -1,0 +1,21 @@
+<CFSET rightnow =Now()>
+<CFPARAM NAME = "dayofweek" DEFAULT = "#DayOfWeek(Now())#">
+<CFSET sunadj = 0 - dayofweek>
+<CFSET satadj = 8 - dayofweek>
+<CFSET sundate =#DateFormat(DateAdd('d',sunadj,rightnow),'mm/dd/yy')#>
+<CFSET satdate =#DateFormat(DateAdd('d',satadj,rightnow),'mm/dd/yy')#>
+
+<cfquery name="rs_gamesthisweek1" datasource="#currentDSN#">
+  
+  SELECT table_games.gameDate, table_games.gameFieldCode, table_games.gameHomeTeam, table_games.gameAwayTeam, table_games.gameHomeScore, table_games.gameAwayScore, table_fields.fieldName, table_teams_away.teamName, table_teams_away.teamWins, table_teams_away.teamLosses, table_teams_home!teamWins as teamWinsh, table_teams_home!teamLosses as teamLossesh,  table_teams_home!teamName AS teamNameh
+FROM ((table_games INNER JOIN table_fields ON table_games.gameFieldCode = table_fields.fieldCode) INNER JOIN table_teams AS table_teams_home ON table_games.gameHomeTeam = table_teams_home.teamCode) INNER JOIN table_teams AS table_teams_away ON table_games.gameAwayTeam = table_teams_away.teamCode
+WHERE ((table_games.gameDate > #CreateODBCDate(sundate)#) AND (table_games.gameDate < #CreateODBCDate(satdate)#))
+ORDER BY table_games.gameDate ASC, table_games.gameFieldCode
+  </cfquery>
+
+<cfquery name="rs_gamesthisweek" datasource="#currentDSN#">
+SELECT table_games.gameDate, table_games.gameTime, table_games.gameFieldCode, table_games.gameHomeTeam, table_games.gameAwayTeam, table_teams_away.teamName, table_teams_away.teamWins, table_teams_away.teamLosses, table_teams_away.teamSeed, table_teams_home!teamName AS teamNameh, table_teams_home!teamWins as teamWinsh, table_teams_home!teamLosses as teamLossesh, table_teams_home!teamSeed as teamSeedh, table_fields.fieldName, table_games.gameStatNo, table_statmsg.statmsgShort, table_games.gameAwayScore, table_games.gameHomeScore
+FROM table_statmsg INNER JOIN (table_fields INNER JOIN (table_teams AS table_teams_away INNER JOIN (table_games INNER JOIN table_teams AS table_teams_home ON table_games.gameHomeTeam = table_teams_home.teamCode) ON table_teams_away.teamCode = table_games.gameAwayTeam) ON table_fields.fieldCode = table_games.gameFieldCode) ON table_statmsg.statmsgNo = table_games.gameStatNo
+WHERE ((table_games.gameDate > #CreateODBCDate(sundate)#) AND (table_games.gameDate < #CreateODBCDate(satdate)#))
+ORDER BY table_games.gameDate ASC, table_games.gameTime ASC, table_games.gameFieldCode
+  </cfquery>

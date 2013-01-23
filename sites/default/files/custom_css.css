@@ -1,0 +1,325 @@
+#header {
+	margin-bottom:7px;
+}
+
+form#user-register h3 {
+	background-color:#EEEEEE;
+	border-style:solid;
+	padding: 10px;
+}
+
+
+.view-display-id-page_4 .views-table,
+.view-new-roster-view-for-coaches .views-table {
+	margin-top: 30px;
+}
+
+.view-display-id-page_4 .views-table caption,
+.view-new-roster-view-for-coaches .views-table caption {
+	text-align:left;
+	background-color:#000000;
+	color:#eeeeee;
+	padding-bottom:3px;
+	padding-left:10px;
+	padding-top:3px;
+	font-weight:bold;
+	margin-bottom: 3px;
+}
+
+th.views-field-field-team-code-value {
+	width: 30px;
+	vertical-align: bottom;
+}
+
+th.views-field-field-team-reference-for-stats-nid {
+	width: 250px;
+	vertical-align: bottom;
+}
+
+th.views-field-field-season-total-wins-value,
+th.views-field-field-season-total-losses-value,
+th.views-field-field-season-total-points-value,
+th.views-field-field-season-total-runs-allowed-value,
+th.views-field-field-season-total-runs-scored-value,
+th.views-field-field-season-total-run-diff-value {
+	width: 40px;
+	vertical-align: bottom;
+}
+
+
+th.views-field-field-profile-player-sex-value,
+th.views-field views-field-field-profile-player-coach-statu-value {
+	width: 75px;
+	vertical-align: bottom;
+}
+
+th.views-field-field-profile-player-eligibility-value,
+th.views-field-field-profile-player-coach-phone-value {
+	width: 120px;
+	vertical-align: bottom;
+}
+
+th.views-field-field-profile-player-last-name-value {
+	width: 200px;
+	vertical-align: bottom;
+}
+
+td.gamedatecell {
+	width: 75px;
+	vertical-align: bottom;
+}
+
+td.gameopponentcell {
+	width: 350px;
+	vertical-align: bottom;
+}
+
+td.gamefieldorscorecell {
+	width: 200px;
+	vertical-align: bottom;
+}
+
+.view-display-id-page_1 th.views-field-field-season-total-points-value {
+	width: 200px;
+	vertical-align: bottom;
+}
+
+.view-display-id-page_1 th.views-field-counter {
+	width: 30px;
+	vertical-align: bottom;
+	padding-right: 0;
+}
+
+.view-display-id-page_1 td.views-field-counter {
+	text-align: right;
+}
+
+.view-display-id-page_1 th.views-field-field-team-reference-for-stats-nid {
+	width: 300px;
+	vertical-align: bottom;
+	padding-right: 0;
+}
+
+.view-display-id-page_1 th.views-field-field-season-total-points-value {
+	width: 100px;
+	vertical-align: bottom;
+	text-align: center;
+	padding-right: 0;
+}
+
+.view-display-id-page_1 td.views-field-field-season-total-points-value {
+	text-align: center;
+}
+
+.view-display-id-page_1 th.views-field-field-season-games-remaining-value {
+	width: 150px;
+	vertical-align: bottom;
+	text-align: center;
+	padding-right: 0;
+}
+
+.view-display-id-page_1 td.views-field-field-season-games-remaining-value {
+	text-align: center;
+}
+
+
+
+
+
+
+
+
+#views_slideshow_singleframe_main_slideshow-page_1 {
+	position:relative;
+}
+
+#transparency {
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+	width: 700px;
+	height: 200px;
+	background-color: #000;
+	filter:alpha(opacity=80);
+	opacity: 0.8;
+	-moz-opacity:0.8;
+}
+
+#mycontent {
+	position: absolute;
+	top: 270px;
+	left: 40px;
+	color: #fff;
+	margin-right: 40px;
+}
+
+#mycontent h1 {
+	color: orange;
+}
+
+#mycontent .tk-league-gothic {
+	letter-spacing: 1.5px;
+	font-size: 32px;
+	color: #ff6633;
+}
+
+#myteaser {
+margin-top: 10px;
+}
+
+.tk-junction p {
+	font-family: "junction-1","junction-2",sans-serif;
+}
+
+
+h1.site-name a {
+	font-family: "league-gothic-1","league-gothic-2",sans-serif;
+	font-size: 40px;
+}
+
+#mylink .tk-league-gothic {
+	margin-top: 30px;
+/* 	letter-spacing: 1.5px; */
+	font-size: 16px;
+/* 	color: #ff6633; */
+}
+
+
+.views_slideshow_pagerThumbnails {
+	position: relative;
+	bottom: 550px;
+	left: 270px;
+}
+
+/*
+#primarymenu a {
+	font-family: "league-gothic-1","league-gothic-2",sans-serif;
+	font-size: 150%;
+	font-weight: normal;
+}
+*/
+
+#primarymenu a:hover, .site-name a:hover {
+	text-decoration: none;
+	color: #FF6633;
+}
+
+
+
+/* ----- CLASSES FOR SCOREKEEPING BLOCK MODULE ----- */
+.date-cell-1 {
+	width: 35px;
+	background:none repeat scroll 0 0 #F5F5E9;
+	text-align: center;
+	border: 1px solid #000000;
+/* 	font-size: .95em; */
+}
+
+.date-cell-2 {
+	width: 35px;
+	background:none repeat scroll 0 0 #EEF9F4;
+	text-align: center;
+	border: 1px solid #000000;
+
+/* 	font-size: .95em; */
+}
+
+.teams-cell-1 {
+	width: 80px;
+	background:none repeat scroll 0 0 #F5F5E9;
+	text-align: center;
+	border: 1px solid #000000;
+
+/* 	font-size: .95em; */
+}
+
+.teams-cell-2 {
+	width: 80px;
+	background:none repeat scroll 0 0 #EEF9F4;
+	text-align: center;
+	border: 1px solid #000000;
+
+/* 	font-size: .95em; */
+}
+
+.results-cell-1 {
+	width: 130px;
+	background:none repeat scroll 0 0 #F5F5E9;
+	text-align: center;
+	border: 1px solid #000000;
+
+/* 	font-size: .95em; */
+}
+
+.results-cell-2 {
+	width: 130px;
+	background:none repeat scroll 0 0 #EEF9F4;
+	text-align: center;
+	border: 1px solid #000000;
+
+/* 	font-size: .95em; */
+}
+
+
+/* ----- CLASSES FOR SCOREKEEPING BLOCK MODULE ----- */
+
+
+
+/* ----- CLASSES FOR TYPEKIT ----- */
+
+h1.site-name a {
+	font-family: "league-gothic-1","league-gothic-2",sans-serif;
+	font-size: 40px;
+/* 	font-stretch: expanded; */
+}
+
+.primary-links li a {
+	font-family: "junction-1","junction-2",sans-serif;
+}
+
+#primarymenu .primary-links li a {
+	font-size: 12px;
+}
+
+
+/* ----- CLASSES FOR TYPEKIT ----- */
+
+
+
+/* ----- CLASSES FOR HALL OF CHAMPIONS TABLE ----- */
+
+td.views-field-field-season-champion-year-value {
+/* 	width: 175px; */
+	vertical-align: top;
+}
+
+td.views-field-field-season-champion-value {
+	width: 175px;
+	vertical-align: top;
+}
+
+td.views-field-field-season-runnerup-value {
+	width: 175px;
+	vertical-align: top;
+}
+
+.hallofchampions td.views-field-body {
+	vertical-align: top;
+}
+
+.hallofchampions td.views-field-body p {
+	margin: 0;
+}
+
+/* ----- CLASSES FOR HALL OF CHAMPIONS TABLE ----- */
+
+
+
+
+/* ----- CLASSES FOR RAINOUT MESSAGE BLOCK ----- */
+
+#block-block-1 {
+	border: #517054 solid 2px;
+	margin-top: 9px;
+	margin-left: 10px;
+}
