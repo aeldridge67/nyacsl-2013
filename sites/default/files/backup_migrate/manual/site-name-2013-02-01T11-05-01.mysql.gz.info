@@ -1,0 +1,8 @@
+filename = "site-name-2013-02-01T11-05-01"
+description = ""
+datestamp = "1359734704"
+generator = "Backup and Migrate (http://drupal.org/project/backup_migrate)"
+generatorversion = "7.x-2.x"
+sites[0][version] = "7.19"
+sites[0][name] = "NYACSL 2013"
+sites[0][url] = "http://localhost/current-work/nyacsl-2013/"
