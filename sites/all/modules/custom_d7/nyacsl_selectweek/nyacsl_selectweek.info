@@ -1,0 +1,7 @@
+;$Id$
+name = NYACSL SelectWeek Module
+description = "Module that adds a .js file which extends a jQuery UI Datepicker's functionality to highlight the entire week of any selected day."
+package = NYACSL
+core = 7.x
+
+files[] = nyacsl_selectweek.module

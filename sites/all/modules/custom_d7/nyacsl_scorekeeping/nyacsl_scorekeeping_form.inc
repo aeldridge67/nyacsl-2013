@@ -274,11 +274,39 @@ function nyacsl_scorekeeping_form_personal_info($form, &$form_state) {
 
 	);
 	
-    $form['week_chooser'] = array(
-    '#type' => 'item',
-    '#title' => t('This space reserved for a calendar view that allows you to select a week at a time, and then a listing of that week\'s games to the right.'),
-  );
+    $form['scorekeeping_calendar'] = array(
+		'#type' => 'item',
+/* 		'#title' => t('This space reserved for a calendar view that allows you to select a week at a time.'), */
+		'#markup' => '<div class="day-picker"></div>',
+		'#states' => array(
+			'visible' => array(  // action to take.
+				':input[name="scorekeeping_task"]' => array('value' => '1'),
+			),
+		),
+	);
+  
+/*
+	$form['game_selector'] = array(
+		'#type' => 'item',
+		'#title' => t('This space reserved for a listing of the selected week\'s games.'),
+	);
+*/
 
+	$games_options = array('abc','def','ghi','jkl');
+	
+	$form['game_selector'] = array(
+    '#type' => 'radios',
+    '#title' => t('Games'),
+    '#options' => $games_options,
+    
+    /*
+    '#default_value' => isset($node->active) ? $node->active : 1,
+    '#options' => $active,
+    '#description' => t('When a poll is closed, visitors can no longer vote for it.'),
+    '#access' => $admin,
+*/
+  );
+	
 	$form['enter_finalscores'] = array (
 		'#type' => 'fieldset',
 		'#title' => t('Enter Final Scores'),
